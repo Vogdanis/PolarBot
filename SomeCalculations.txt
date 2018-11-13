@@ -1,0 +1,41 @@
+
+stepToMM 0.471239
+
+dm1 = 1.07031	 
+dm2 = 161.782
+
+Calculate how many steps each motor must do:
+
+Msteps = dm1 / stepsToMM
+ 
+m1Steps = 2,2;
+m2Steps = 343;
+
+Now find the delay for each motor
+
+we calculate the speed for the longest distance depending on our preset maximum speed
+so : 
+Total Time = length / speed 
+tm1 = 161 / 33  = 4.87 seconds
+
+now we know that we have to do 343 steps in 4.87 seconds so we can calculate the right delay 
+
+delay = time / steps 
+delay = (4.87 * 1000) / 343  ==  14.198 delayMS
+
+
+for the other motor = 
+delay = (4.87 * 1000) / 2.2  == 2213 delayMS
+
+
+
+Break big lines to smaller ones
+
+if dm1 = 160 
+we say that maximum one segment length is 30 for example
+then lines = 160/30 = 5,3
+then we have a loop 5 times per 30mm 
+between each look we do  the FK and recompute the distance and delays. 
+and final segment is the remaining 30 * 0.3 = 9 mm 
+
+
