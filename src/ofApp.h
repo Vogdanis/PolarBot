@@ -24,7 +24,7 @@ public:
     void windowResized(int w, int h);
     void dragEvent(ofDragInfo dragInfo);
     void gotMessage(ofMessage msg);
-    void FindTimeToPoint(float newX, float newY);
+    void FindTimeToPoint(float posX, float posY, float newX, float newY);
     void drawLine(float x0, float y0);
     void IK(float x, float y, float &L1, float &L2);
     void Teleport(float x, float y);
@@ -36,7 +36,7 @@ public:
     float computeL1(float x, float y);
     float computeL2(float x, float y);
     void gotoPoint(float newL1,  float newL2,float x, float y);
-    void breakLineToSegments(float line); 
+    void breakLineToSegments(float posX, float posY, float newX, float newY); 
     void circleResolutionChanged(int & circleResolution);
     void ringButtonPressed();
     bool bHide;
@@ -62,15 +62,21 @@ public:
     float L2;
     float posX;
     float posY;
+    float targetL1;
+    float targetL2;
     float newL1;
     float newL2;
+    float t;
+    float pointX, pointY;
+    float dm1,dm2;
     bool m1Dir = 0;  // 0 = reel in // 1 = reel out
     bool m2Dir = 0;
     float delayM1;
     float delayM2;
+    int lineLength; 
     int segmentLength;
     int segmentCount;
-    int segmentRemaining;
+    float segmentRemaining;
     ///// Polarbot functions //////
     int motorDistance;
     int gantryInitialLength;

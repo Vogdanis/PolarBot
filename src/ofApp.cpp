@@ -4,13 +4,13 @@
 void ofApp::setup(){
  
     stepper = 200; // nema 17 1.8 degree 200 steps per revolution
-    spooldia = 20; // spool diameter in mm
+    spooldia = 10; // spool diameter in mm
     spoolCir = spooldia * PI; // circumference of the spool in mm
     stepToMM = spoolCir / stepper;
 
     feedrate = 4000; // 2000 mm/min = ~33mm/s
     frMMs = feedrate / 60;
-    segmentLength = 30;
+    segmentLength = 10;
     segmentCount = 0;
     segmentRemaining = 0;
 
@@ -134,8 +134,8 @@ void ofApp::keyPressed(int key){
         cout << millisTime << endl;
     } 
     if(key == 'b'){
-      FindTimeToPoint(300,500); 
-      Teleport(300,500);
+     // FindTimeToPoint(300,500);
+     // Teleport(300,500);
     }
 }
 
@@ -162,10 +162,9 @@ void ofApp::mousePressed(int x, int y, int button){
     int mouseX = ofGetMouseX();
     int mouseY = ofGetMouseY();
     
-    //Teleport(mouseX,mouseY);
-    FindTimeToPoint(mouseX,mouseY);
-    cout << "L1 = " <<L1 << "  "  << "   L2 = " << L2 << endl;
-    FK(L1, L2, posX, posY);
+
+    breakLineToSegments(posX,posY,mouseX,mouseY);
+    
     
 }
 
@@ -272,9 +271,9 @@ void ofApp::drawLine(float x, float y){
 	float timeOfArrival = currentTime + (time * 1000);
 	float timerM1 = currentTime + delayM1;
 	float timerM2 = currentTime + delayM2;
-	cout << "CurrentTime = " << currentTime << "  timeOfArrival = " << timeOfArrival << endl;
-	cout << "Estimated drawing time = " << timeOfArrival - currentTime << endl;
-	cout << "TimerM1 = " << timerM1 << "  timerM2 = " << timerM2 << endl;
+	//cout << "CurrentTime = " << currentTime << "  timeOfArrival = " << timeOfArrival << endl;
+	//cout << "Estimated drawing time = " << timeOfArrival - currentTime << endl;
+	//cout << "TimerM1 = " << timerM1 << "  timerM2 = " << timerM2 << endl;
 	while(timeOfArrival >= ofGetElapsedTimeMillis()){
 		float now = ofGetElapsedTimeMillis();
 		if(now >= timerM1){
@@ -334,63 +333,34 @@ void ofApp::FK(float L1, float L2, float &x, float &y){
     x = theta * a;
     int limit_top = 0;
     y = abs(limit_top - (sqrt( 1.0 - theta * theta ) * a));
-//    cout << "L1 " << L1 << "   L2  " << L2 << endl;
-    cout << "Forward Kinematics" << endl;
-    cout << "  x =  " << x << endl;
-    cout << "  y =  " << y << endl;
+   // cout << "L1 " << L1 << "   L2  " << L2 << endl;
+   // cout << "Forward Kinematics" << endl;
+   // cout << "  x =  " << x << endl;
+   // cout << "  y =  " << y << endl;
 }
 //--------------------------------------------------------------
-void ofApp::FindTimeToPoint(float newX, float newY){
-	float targetL1 = 0;
-	float targetL2 = 0;
+void ofApp::FindTimeToPoint(float posX, float posY, float newX, float newY){
+	targetL1 = 0;
+	targetL2 = 0;
 	//cout << "Newx " << newX << "  newY  " << newY << endl;
+	//Use IK to find the length depending on the coordinates.
 	IK(newX, newY, targetL1, targetL2);
 	IK(posX,posY,L1,L2);
     	cout << "currentL1 " << L1 << "   currentL2 " << L2 <<  endl;
 	cout << "targetL1 " << targetL1  <<  "   targetL2 " << targetL2  <<  endl;
 	// find the difference in current vs target length of strings
-	float dm1 = targetL1 - L1;
-	float dm2 = targetL2 - L2;
+    dm1 = targetL1 - L1;
+    dm2 = targetL2 - L2;
+	//cout << "Difference in string m1  " << dm1 << endl;
+	//cout << "Difference in string m2  " << dm2 << endl;
 
-	cout << "Difference in string m1  " << dm1 << endl;
-	cout << "Difference in string m2  " << dm2 << endl;
-
-	checkMotorDirection(dm1,dm2);
-//	calculateTime(dm1, dm2);
-	calculateTime2(dm1, dm2);
-	drawLine(newX, newY);
-}
+	}
 
 
-//-------------------------------------------------------------- 
+//--------------------------------------------------------------
 /*
- * First see which motor has to move more and calculate how long it will take to reach destination using max speed, then calculate the delay we will have to use for the other motor in order that they will both arrive to the destination at the same time */
+  First see which motor has to move more and calculate how long it will take to reach destination using max speed, then calculate the delay we will have to use for the other motor in order that they will both arrive to the destination at the same time */
 
-void ofApp::calculateTime(float dm1, float dm2){
-	float totalTime = abs(dm1) + abs(dm2);
-	if(abs(dm1) >= abs(dm2)){
-		delayM1 = stepDelay;
-		time = abs(dm1 / frMMs);
-		//// now we know how much time it will taka for the motor that is further away so we must calculate the delay for the other motor.
-		float m2Speed = abs(dm2) / time;
-		cout << "m2Speed = "<< m2Speed << endl;
-		delayM2 = m2Speed/stepToMM;
-		cout << "Total time to destination : " << time << " sec" << endl;  
-		cout << "M1 setpDelay = " << delayM1 << "  M2 stepDelay = " << delayM2 << endl;
-		}
-	else{
-		delayM2 = stepDelay;
-		time = abs(dm2 / frMMs);
-		float m1Speed = abs(dm1) / time;
-		cout << "m1Speed" << m1Speed << endl;
-		delayM1 = m1Speed/stepToMM;
-		cout << "Total time to destination : " << time << " sec" << endl;
-		cout << "M1 stepDelay = " << delayM1 << "  M2 stepDelay = " << delayM2 << endl;
-	    }
-}
-
-
-//-------------------------------------------------------------- 
 void ofApp::calculateTime2(float dm1, float dm2){
 	// calculate how many steps each motor must do to arrive to destination
 	float stepsM1 = abs(dm1) / stepToMM;
@@ -405,10 +375,9 @@ void ofApp::calculateTime2(float dm1, float dm2){
 	//Now we know how many steps we have to do and in how many seconds we have to do them so we can calculate the delay.
 	delayM1 = abs((time * 1000) / stepsM1);
 	delayM2 = abs((time * 1000) / stepsM2);
-	breakLineToSegment(abs(dm1));
-	cout << "dm1 = " << dm1 << "  dm2 = " << dm2 << endl;
-	cout << "Steps m1 = " << stepsM1 << "  Steps m2 = " << stepsM2 << endl;
-	cout << "Delay m1 = " << delayM1 << "  Delay m2 = " << delayM2 << endl;
+	//cout << "dm1 = " << dm1 << "  dm2 = " << dm2 << endl;
+	//cout << "Steps m1 = " << stepsM1 << "  Steps m2 = " << stepsM2 << endl;
+	//cout << "Delay m1 = " << delayM1 << "  Delay m2 = " << delayM2 << endl;
 }
 
 
@@ -428,20 +397,68 @@ void ofApp::checkMotorDirection(float dm1, float dm2){
    // cout << "m1Dir  " << m1Dir << "  m2Dir  " << m2Dir << endl;
 }
 //-------------------------------------------------------------
-void ofApp::breakLineToSegments(float line){
+void ofApp::breakLineToSegments(float posX, float posY, float newX, float newY){
 	
-	segmentCount = line / segmentLength;
-	if((line % segmentLength) != 0){
-		segmentRemaining = line % segmentLength;
-	}
+	int x = abs( (newX - posX) * (newX - posX) );
+	int y = abs( (newY - posY) * (newY - posY) );
+	lineLength = sqrt( x + y ); 
+        // divide the line length with the segmentLength to see how many semgents we nee to draw 
+	
+	cout << "LineLength = " << lineLength << endl;
+	
+	//find how many segments we need to draw
+	segmentCount = lineLength / segmentLength;
+	segmentRemaining = lineLength % segmentLength;
+
 	cout << "SegmentCount = " << segmentCount << "  remainingSegment = " << segmentRemaining << endl;
+    
+    
+    if(lineLength > segmentLength){
+        
+        for(int i = 0; i <= segmentCount; i++){
+            
+            //find the ratio of line and segment
+            t = float(segmentLength) / float(lineLength);
+            pointX, pointY = 0;
+            pointX = (1-t)*posX + t * newX;
+            pointY = (1-t)*posY + t * newY;
+            cout << "Segment X = " << pointX << "  Segment Y = " << pointY << endl;
+            
+            FindTimeToPoint(posX, posY, pointX, pointY);
+            checkMotorDirection(dm1,dm2);
+            calculateTime2(dm1, dm2);
+            drawLine(pointX, pointY);
+            posX = pointX;
+            posY = pointY;
+        }
+        if(abs(posX - newX) > 5 || abs(posY - newY) > 5){
+            breakLineToSegments(posX,posY,newX,newY);
+        }
+       /*
+        FindTimeToPoint(posX, posY, newX, newY);
+        checkMotorDirection(dm1,dm2);
+        calculateTime2(dm1, dm2);
+        drawLine(newX, newY);
+       */
+
+        
+    }else{
+        FindTimeToPoint(posX, posY, newX, newY);
+        checkMotorDirection(dm1,dm2);
+        calculateTime2(dm1, dm2);
+        drawLine(newX, newY);
+    
+    }
+    
+    
 }
 
 
 
 
+/*
 
-
+*/
 
 
 

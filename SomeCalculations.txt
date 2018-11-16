@@ -39,3 +39,16 @@ between each look we do  the FK and recompute the distance and delays.
 and final segment is the remaining 30 * 0.3 = 9 mm 
 
 
+
+Break big lines to smaller ones V2
+
+When we get a long line first calculate its length. If the length is bigger than the desired maximum segment length we divide it with the segment length and we also keep the remainder. Then to draw the line we find the current string lengths depending on our current position and we use 
+
+
+
+
+
+
+
+CFE9
+BUZjy95433
