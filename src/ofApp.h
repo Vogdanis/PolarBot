@@ -42,21 +42,29 @@ public:
     bool bHide;
     
     ////// GUI //////////
-    
+    ofxGuiGroup pageSetup;
     ofxColorSlider color;
-    ofxVec2Slider center;
-    ofxIntSlider circleResolution;
-    ofxToggle filled;
-    ofxButton ringButton;
-    ofxLabel screenSize;
-    ofxFloatSlider canvasWidth;
-    ofxFloatSlider canvasHeight;
+    ofxIntSlider canvasWidth;
+    ofxIntSlider canvasHeight;
+    ofxIntSlider canvasYpos;
     ofxPanel gui;
+    ofxIntSlider boardWidth;
+    ofxIntSlider boardHeight;
+    
+
+
+    //// GUI Group1 /////
+    ofxGuiGroup machineGroup;
+    ofxIntSlider motorSteps;
+    ofxIntSlider gantryRad;
+    ofxPanel screenSize;
+
 
     long millisTime;
     ofFbo fbo;
     
     ////// Gantry ///////
+    int gantryColor;
     float gantryRadius;
     float L1;
     float L2;
@@ -80,7 +88,8 @@ public:
     ///// Polarbot functions //////
     int motorDistance;
     int gantryInitialLength;
-    
+   
+   
     
     int stepper;  // nema 17 1.8 degree 200 steps per revolution
     float spooldia;  // spool diameter in mm

@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<group>
+	<fill>1</fill>
+	<circle_res>10</circle_res>
+	<center>325, 150</center>
+	<color>253, 251, 255, 255</color>
+	<CanvasYpos>150</CanvasYpos>
+	<Canvas_Height>286</Canvas_Height>
+	<Canvas_Width>296</Canvas_Width>
+	<Page_Settings>
+		<color>228, 227, 242, 255</color>
+		<CanvasYpos>147</CanvasYpos>
+		<Canvas_Height>500</Canvas_Height>
+		<Canvas_Width>375</Canvas_Width>
+	</Page_Settings>
+	<Motor_Settings>
+		<MotSteps>200</MotSteps>
+		<GantryRadius>10</GantryRadius>
+	</Motor_Settings>
+	<Board_Page_Settings>
+		<Board_Width>476</Board_Width>
+		<Board_Height>517</Board_Height>
+		<CanvasYpos>151</CanvasYpos>
+		<Canvas_Width>282</Canvas_Width>
+		<Canvas_Height>310</Canvas_Height>
+		<color>100, 100, 140, 255</color>
+	</Board_Page_Settings>
+</group>

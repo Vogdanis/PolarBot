@@ -13,7 +13,7 @@ void ofApp::setup(){
     segmentLength = 10;
     segmentCount = 0;
     segmentRemaining = 0;
-
+    
     /// Find step delay based on feedrate 
     // Calculate how many steps we have to do to achieve that feedrate
     // 33mm/s   means  in 1000ms   move 33mm  
@@ -48,7 +48,9 @@ void ofApp::setup(){
     ////// Gantry  ///////////
     
     gantryRadius = 10;
-
+   // gantryColor = ofColor(255);
+    
+    
     ////// FBO buffer ////////
     fbo.allocate(ofGetWidth(),ofGetHeight());
     fbo.begin();
@@ -57,20 +59,31 @@ void ofApp::setup(){
     
     ///////// GUI /////////////
     
-    gui.setup(); // most of the time you don't need a name
-    gui.add(filled.setup("fill", true));
-    gui.add(circleResolution.setup("circle res", 10, 5, 90));
-    gui.add(center.setup("center", ofVec2f(ofGetWidth()*.5, gantryInitialLength), ofVec2f(0, 0), ofVec2f(ofGetWidth(), ofGetHeight())));
-    gui.add(color.setup("color", ofColor(100, 100, 140), ofColor(0, 0), ofColor(255, 255)));
-    gui.add(canvasHeight.setup("Canvas Height",150,10,500));
+    gui.setup(); // most of the time you don't need a name 
+    pageSetup.setup( "Board/Page Settings" );
+    pageSetup.add(boardWidth.setup("Board Width",300,100,1000));
+    pageSetup.add(boardHeight.setup("Board Height",500,100,1000));
+    pageSetup.add(canvasYpos.setup("CanvasYpos",30,30,300));
+    pageSetup.add(canvasWidth.setup("Canvas Width",300,10,500));
+    pageSetup.add(canvasHeight.setup("Canvas Height",150,10,500));
+   gui.add(&pageSetup);
     
+    pageSetup.add(color.setup("color", ofColor(100, 100, 140), ofColor(0, 0), ofColor(255, 255)));
+
+    machineGroup.setup( "Motor Settings" );
+    machineGroup.add(motorSteps.setup("MotSteps", 200, 0, 1600));
+    machineGroup.add(gantryRad.setup( "GantryRadius" , 10, 1, 30) );
+    
+    gui.add(&machineGroup);
     //////////////////////////////////////////////////////
     
     cout << "posX = " << posX << endl;
     cout << "posY = " << posY << endl;
     
-    
+    // Show GUi, collapse all tabs and load previous settings
     bHide = false;
+    gui.minimizeAll();
+    gui.loadFromFile( "settings.xml");
     
 }
 
@@ -83,34 +96,34 @@ void ofApp::exit(){
 
 //--------------------------------------------------------------
 void ofApp::update(){
-    ofSetCircleResolution(circleResolution);
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-    //ofBackgroundGradient(ofColor::white, ofColor::gray);
-    
-    if(filled){
-        ofFill();
-    }else{
-        ofNoFill();
-    }
-    
+    ofBackgroundGradient(ofColor::white, ofColor::gray);
     ofSetColor(color);
+    int canvasXpos = (ofGetWidth() - canvasWidth)/2;
+    int boardXpos = ofGetWidth()/2 - boardWidth/2;
+    ofDrawRectangle(boardXpos, 20, boardWidth, boardHeight);
+    ofSetColor(255);
+    ofDrawRectangle(canvasXpos,canvasYpos,canvasWidth,canvasHeight);
     
     
+    
+    ofSetColor(gantryColor);
     // auto draw?
     // should the gui control hiding?
     if(!bHide){
         gui.draw();
     }
     
+    ofSetColor( ofColor(0, 0, ofRandom( 128, 255 ) ));
+               
     fbo.draw(0,0);
-    ofDrawLine(0, 0, posX, posY);
-    ofDrawLine(ofGetWidth(), 0, posX, posY);
-    //ofDrawCircle(posX, posY, gantryRadius);
-    ofDrawCircle(300,500,2);
-   // line(100, 100);
+    ofDrawLine(boardXpos, 20, posX, posY);
+    ofDrawLine(boardXpos + boardWidth, 20, posX, posY);
+    ofDrawCircle(300,500,1);
+
     
 
 }
@@ -185,7 +198,7 @@ void ofApp::mouseExited(int x, int y){
 
 //--------------------------------------------------------------
 void ofApp::windowResized(int w, int h){
-    screenSize = ofToString(w) + "x" + ofToString(h);
+   // screenSize = ofToString(w) + "x" + ofToString(h);
 }
 
 //--------------------------------------------------------------
@@ -431,7 +444,7 @@ void ofApp::breakLineToSegments(float posX, float posY, float newX, float newY){
             posX = pointX;
             posY = pointY;
         }
-        if(abs(posX - newX) > 5 || abs(posY - newY) > 5){
+        if(abs(posX - newX) > 2 || abs(posY - newY) > 2){
             breakLineToSegments(posX,posY,newX,newY);
         }
        /*
