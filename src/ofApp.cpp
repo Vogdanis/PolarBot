@@ -2,7 +2,10 @@
 
 //--------------------------------------------------------------
 void ofApp::setup(){
- 
+    
+    scaleToFitScreen = 1;
+    boardOfsetFromTop = 50;
+    
     stepper = 200; // nema 17 1.8 degree 200 steps per revolution
     spooldia = 10; // spool diameter in mm
     spoolCir = spooldia * PI; // circumference of the spool in mm
@@ -66,7 +69,7 @@ void ofApp::setup(){
     pageSetup.add(canvasYpos.setup("CanvasYpos",30,30,300));
     pageSetup.add(canvasWidth.setup("Canvas Width",300,10,500));
     pageSetup.add(canvasHeight.setup("Canvas Height",150,10,500));
-   gui.add(&pageSetup);
+    gui.add(&pageSetup);
     
     pageSetup.add(color.setup("color", ofColor(100, 100, 140), ofColor(0, 0), ofColor(255, 255)));
 
@@ -75,6 +78,7 @@ void ofApp::setup(){
     machineGroup.add(gantryRad.setup( "GantryRadius" , 10, 1, 30) );
     
     gui.add(&machineGroup);
+    
     //////////////////////////////////////////////////////
     
     cout << "posX = " << posX << endl;
@@ -85,6 +89,7 @@ void ofApp::setup(){
     gui.minimizeAll();
     gui.loadFromFile( "settings.xml");
     
+    
 }
 
 //--------------------------------------------------------------
@@ -92,40 +97,22 @@ void ofApp::exit(){
     
 }
 
-
-
 //--------------------------------------------------------------
 void ofApp::update(){
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-    ofBackgroundGradient(ofColor::white, ofColor::gray);
-    ofSetColor(color);
-    int canvasXpos = (ofGetWidth() - canvasWidth)/2;
-    int boardXpos = ofGetWidth()/2 - boardWidth/2;
-    ofDrawRectangle(boardXpos, 20, boardWidth, boardHeight);
-    ofSetColor(255);
-    ofDrawRectangle(canvasXpos,canvasYpos,canvasWidth,canvasHeight);
+   
+//    cam.begin();
+//    ofScale(1, -1, 1);
+//    cam.setPosition(300, -300, 500);
+//    cam.disableMouseInput();
+    
+    drawBoard();
     
     
-    
-    ofSetColor(gantryColor);
-    // auto draw?
-    // should the gui control hiding?
-    if(!bHide){
-        gui.draw();
-    }
-    
-    ofSetColor( ofColor(0, 0, ofRandom( 128, 255 ) ));
-               
-    fbo.draw(0,0);
-    ofDrawLine(boardXpos, 20, posX, posY);
-    ofDrawLine(boardXpos + boardWidth, 20, posX, posY);
-    ofDrawCircle(300,500,1);
-
-    
-
+//    cam.end();
 }
 
 //--------------------------------------------------------------
@@ -169,14 +156,17 @@ void ofApp::mouseDragged(int x, int y, int button){
 
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button){
-    cout << "Mouse X: " <<ofGetMouseX() << endl;
-    cout << "Mouse Y: " <<ofGetMouseY() << endl;
     
     int mouseX = ofGetMouseX();
     int mouseY = ofGetMouseY();
     
+    if(mouseX > canvasXpos && mouseX < canvasXpos + canvasWidth && mouseY > canvasYpos && mouseY < canvasYpos + canvasHeight){
+        cout << "Mouse X: " << mouseX << endl;
+        cout << "Mouse Y: " << mouseY << endl;
+        breakLineToSegments(posX,posY,mouseX,mouseY);
+    }
 
-    breakLineToSegments(posX,posY,mouseX,mouseY);
+   
     
     
 }
@@ -217,6 +207,7 @@ float ofApp::computeL1(float x,float y){
     //cout << "L1 = " << sqrt(length) << endl;
     return sqrt(length);
 }
+
 //--------------------------------------------------------------
 float ofApp::computeL2(float x,float y){
     x = ofGetWidth() - x;
@@ -224,6 +215,7 @@ float ofApp::computeL2(float x,float y){
     //cout << "L2 = " << sqrt(length) << endl;
     return sqrt(length);
 }
+
 //--------------------------------------------------------------
 void ofApp::gotoPoint(float $newL1, float $newL2,float x, float y){
     newL1 = computeL1(x,y);
@@ -231,6 +223,7 @@ void ofApp::gotoPoint(float $newL1, float $newL2,float x, float y){
     cout << "Old L1 = " << L1 << "  New L1 = " << newL1 << endl;
     cout << "Old L2 = " << L2 << "  New L2 = " << newL2 << endl;
 }
+
 //--------------------------------------------------------------
 void pauseDelay(int startTime){
     while(1){
@@ -241,6 +234,7 @@ void pauseDelay(int startTime){
         }
     }
 }
+
 //--------------------------------------------------------------
 void ofApp::line(float newX, float newY){
 	int currentTime = ofGetElapsedTimeMillis();
@@ -278,6 +272,7 @@ void ofApp::line(float newX, float newY){
 	cout << "L1 = " << L1 << "  L2 = " << L2 << "  newL1 = " << newL1 << "  newL2 = " << newL2 << endl;
 	FK(L1,L2,posX,posY);
 }
+
 //--------------------------------------------------------------
 void ofApp::drawLine(float x, float y){
 	float currentTime = ofGetElapsedTimeMillis();
@@ -324,8 +319,10 @@ void ofApp::Teleport(float x, float y){
 	//Move the virtual gantry to position x,y
 	IK(x,y,L1,L2);
 }
+
 //--------------------------------------------------------------
 //Turn XY coordinates to string length L1 and L2
+
 void ofApp::IK(float x, float y, float &L1, float &L2){
 	L1 = computeL1(x,y);
 	L2 = computeL2(x,y);
@@ -351,7 +348,9 @@ void ofApp::FK(float L1, float L2, float &x, float &y){
    // cout << "  x =  " << x << endl;
    // cout << "  y =  " << y << endl;
 }
+
 //--------------------------------------------------------------
+
 void ofApp::FindTimeToPoint(float posX, float posY, float newX, float newY){
 	targetL1 = 0;
 	targetL2 = 0;
@@ -368,7 +367,6 @@ void ofApp::FindTimeToPoint(float posX, float posY, float newX, float newY){
 	//cout << "Difference in string m2  " << dm2 << endl;
 
 	}
-
 
 //--------------------------------------------------------------
 /*
@@ -409,6 +407,7 @@ void ofApp::checkMotorDirection(float dm1, float dm2){
 	
    // cout << "m1Dir  " << m1Dir << "  m2Dir  " << m2Dir << endl;
 }
+
 //-------------------------------------------------------------
 void ofApp::breakLineToSegments(float posX, float posY, float newX, float newY){
 	
@@ -466,17 +465,53 @@ void ofApp::breakLineToSegments(float posX, float posY, float newX, float newY){
     
 }
 
+//--------------------------------------------------------------
+void ofApp::drawBoard(){
+    
+    ofBackgroundGradient(ofColor::white, ofColor::gray);
+    ofSetColor(color);
+    canvasXpos = (ofGetWidth() - canvasWidth)/2 ;
+    boardXpos = ofGetWidth()/2 - boardWidth/2 ;
+    
+    if(scaleToFitScreen == 2){
+        ofDrawRectangle(boardXpos + boardWidth / 4, boardOfsetFromTop, boardWidth / scaleToFitScreen , boardHeight / scaleToFitScreen );
+        ofSetColor(255);
+        ofDrawRectangle(canvasXpos + canvasWidth / 4 ,canvasYpos / scaleToFitScreen,canvasWidth / scaleToFitScreen, canvasHeight / scaleToFitScreen);
+    }
+    if(scaleToFitScreen == 1){
+        ofDrawRectangle(boardXpos, boardOfsetFromTop, boardWidth / scaleToFitScreen , boardHeight / scaleToFitScreen );
+        ofSetColor(255);
+        ofDrawRectangle(canvasXpos,canvasYpos / scaleToFitScreen,canvasWidth / scaleToFitScreen, canvasHeight / scaleToFitScreen);
+    }
 
-
-
-/*
-
-*/
-
-
-
-
-
+    
+    
+    
+    
+    
+    ofSetColor(gantryColor);
+    // auto draw?
+    // should the gui control hiding?
+    if(!bHide){
+        gui.draw();
+    }
+    
+    ofSetColor( ofColor(0, 0, ofRandom( 128, 255 ) ));
+    
+    fbo.draw(0,0);
+    if(scaleToFitScreen == 2){
+        ofDrawLine(boardXpos + boardWidth / 4, boardOfsetFromTop, posX, posY);
+        ofDrawLine(boardXpos + boardWidth / 4 +  boardWidth / scaleToFitScreen, boardOfsetFromTop, posX, posY);
+        ofDrawCircle(300,500,1);
+    }
+    if(scaleToFitScreen == 1){
+        ofDrawLine(boardXpos , boardOfsetFromTop, posX, posY);
+        ofDrawLine(boardXpos + boardWidth, boardOfsetFromTop, posX, posY);
+        ofDrawCircle(300,500,1);
+    }
+    
+    
+}
 
 
 

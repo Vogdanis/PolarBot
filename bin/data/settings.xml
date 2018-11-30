@@ -18,11 +18,11 @@
 		<GantryRadius>10</GantryRadius>
 	</Motor_Settings>
 	<Board_Page_Settings>
-		<Board_Width>476</Board_Width>
-		<Board_Height>517</Board_Height>
+		<Board_Width>517</Board_Width>
+		<Board_Height>628</Board_Height>
 		<CanvasYpos>151</CanvasYpos>
 		<Canvas_Width>282</Canvas_Width>
 		<Canvas_Height>310</Canvas_Height>
-		<color>100, 100, 140, 255</color>
+		<color>140, 130, 108, 255</color>
 	</Board_Page_Settings>
 </group>

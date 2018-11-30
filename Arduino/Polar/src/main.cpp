@@ -25,7 +25,7 @@ long millisTime;
  
 
    
-
+float buffX,buffY,buffZ = 0;
 int bufferSize = 50;
 char buffer[50];
 
@@ -321,39 +321,84 @@ void initMotors(){
 
 bool buffReceived = 0;
 int lineCount = 0;
-int xCordSerial[5];
-int yCordSerial[5];
+String xCordSerial;
+String yCordSerial;
+String zCordSerial;
+/// Here we will store the string.toFloat from the buffer 
+float tempX,tempY,tempZ = 0;
+
+
+/////////////////////////////////////////////////
+void makeMove(int currentX, int currentY, int targetX, int targetY){
+
+        FindDistanceToPoint(currentX,currentY,targetX,targetY);
+        checkMotorDirection(dm1,dm2);
+        calculateTime(dm1, dm2);
+        drawLine(targetX, targetY);
+        posX = targetX;
+        posY = targetY;
+}
+/////////////////////////////////////////////////
+
 
 void checkBuffer(char buffer[]){
 
    for(int i = 0; i < bufferSize; i++){
        char c = buffer[i];
+
+
        if(c == 'X'){
-           Serial.print("X value = "); 
            while(1){
-               Serial.print(buffer[i+1]);
+               xCordSerial += buffer[i+1];
+               //Serial.print(buffX);
                i++;
                if(buffer[i] == ' ' || buffer[i] == '\n'){
                    break;
                }
            }
-        Serial.println();
+        Serial.print("xCordSerial = "); Serial.println(xCordSerial);
+        tempX = xCordSerial.toFloat();
+        //Serial.print("To Float : ");Serial.println(tempX,5);
+        xCordSerial = "";
        }
 
 
        if(c == 'Y'){
-           Serial.print("Y value = "); 
            while(1){
-               Serial.print(buffer[i+1]);
+               yCordSerial += buffer[i+1];
+               //Serial.print(buffX);
                i++;
                if(buffer[i] == ' ' || buffer[i] == '\n'){
                    break;
                }
            }
-        Serial.println();
+        Serial.print("yCordSerial = "); Serial.println(yCordSerial);
+        tempY = yCordSerial.toFloat();
+        //Serial.print("To Float : ");Serial.println(tempY,5);
+        yCordSerial = "";
+       }
+
+
+       if(c == 'Z'){
+           while(1){
+               zCordSerial += buffer[i+1];
+               //Serial.print(buffX);
+               i++;
+               if(buffer[i] == ' ' || buffer[i] == '\n'){
+                   break;
+               }
+           }
+        Serial.print("zCordSerial = "); Serial.println(zCordSerial);
+        tempZ = zCordSerial.toFloat();
+        //Serial.print("To Float : ");Serial.println(tempZ,5);
+        zCordSerial = "";
        }
    }
 
+    makeMove(posX, posY, tempX, tempY);
+    posX = tempX;
+    posY = tempY;
+    Serial.print("posX = ");Serial.print(posX);Serial.print("   posY = ");Serial.println(posY);
 }
 
 
@@ -449,4 +494,6 @@ clearBuffer();
    
   
 }
+
+
 

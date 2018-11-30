@@ -39,7 +39,10 @@ public:
     void breakLineToSegments(float posX, float posY, float newX, float newY); 
     void circleResolutionChanged(int & circleResolution);
     void ringButtonPressed();
+    void drawBoard();
     bool bHide;
+    
+    
     
     ////// GUI //////////
     ofxGuiGroup pageSetup;
@@ -52,17 +55,22 @@ public:
     ofxIntSlider boardHeight;
     
 
-
+    
     //// GUI Group1 /////
     ofxGuiGroup machineGroup;
     ofxIntSlider motorSteps;
     ofxIntSlider gantryRad;
     ofxPanel screenSize;
 
-
+    int scaleToFitScreen;
+    int boardOfsetFromTop;
     long millisTime;
-    ofFbo fbo;
     
+    int canvasXpos;
+    int boardXpos;
+    
+    
+    ofFbo fbo;
     ////// Gantry ///////
     int gantryColor;
     float gantryRadius;
@@ -104,6 +112,7 @@ public:
     
     
 ImageClass image;
-  
+ofEasyCam cam;
+
 };
 
