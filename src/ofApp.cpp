@@ -3,39 +3,75 @@
 //--------------------------------------------------------------
 void ofApp::setup(){
     
+    
+    
+    ////// FBO buffer ////////
+    fbo.allocate(ofGetWidth(),ofGetHeight());
+    fbo.begin();
+    ofClear(255,255,255);
+    fbo.end();
+    
+    ///////// GUI /////////////
+    
+    gui.setup(); // most of the time you don't need a name
+    pageSetup.setup( "Board/Page Settings" );
+    pageSetup.add(boardWidth.setup("Board Width",300,100,1000));
+    pageSetup.add(boardHeight.setup("Board Height",500,100,1000));
+    pageSetup.add(canvasYpos.setup("CanvasYpos",30,30,300));
+    pageSetup.add(canvasWidth.setup("Canvas Width",300,10,500));
+    pageSetup.add(canvasHeight.setup("Canvas Height",150,10,500));
+    gui.add(&pageSetup);
+    
+    pageSetup.add(color.setup("color", ofColor(100, 100, 140), ofColor(0, 0), ofColor(255, 255)));
+    
+    machineGroup.setup( "Motor Settings" );
+    machineGroup.add(motorSteps.setup("MotSteps", 200, 0, 1600));
+    machineGroup.add(spooldia.setup( "GantryRadius" , 10, 1, 30) );
+    machineGroup.add(feedrateGUI.setup("Feedrate", 2000,500,4000));
+    machineGroup.add(segmentLength.setup("SegmentLength", 10,5,50));
+    
+    gui.add(&machineGroup);
+    
+    
+    // Show GUi, collapse all tabs and load previous settings
+    bHide = false;
+    gui.minimizeAll();
+    gui.loadFromFile( "settings.xml");
+    
+    //////////////////////////////////////////////////////
+    
+    
     scaleToFitScreen = 1;
     boardOfsetFromTop = 50;
     
-    stepper = 200; // nema 17 1.8 degree 200 steps per revolution
-    spooldia = 10; // spool diameter in mm
+    stepper = motorSteps; // nema 17 1.8 degree 200 steps per revolution
     spoolCir = spooldia * PI; // circumference of the spool in mm
     stepToMM = spoolCir / stepper;
-
-    feedrate = 4000; // 2000 mm/min = ~33mm/s
-    frMMs = feedrate / 60;
+    
+    frMMs = feedrateGUI / 60;
     segmentLength = 10;
     segmentCount = 0;
     segmentRemaining = 0;
     
-    /// Find step delay based on feedrate 
+    /// Find step delay based on feedrate
     // Calculate how many steps we have to do to achieve that feedrate
-    // 33mm/s   means  in 1000ms   move 33mm  
+    // 33mm/s   means  in 1000ms   move 33mm
     // One step will move the thread by stemToMM so 33mm / stepToMM  = stepDelay
-
+    
     stepDelay = frMMs / stepToMM;
-
+    
     cout << "spooldia " << spooldia << endl;
-    cout << "spoolCir " << spoolCir << endl; 
+    cout << "spoolCir " << spoolCir << endl;
     cout << "stepToMM " << stepToMM << endl;
-    cout << "feedrate " << feedrate << endl;
+    cout << "feedrate " << feedrateGUI << endl;
     cout << "stepDelay " << stepDelay << endl;
     
     
     ////// PolarBot ///////////
     
     motorDistance = ofGetWidth();
-    gantryInitialLength = 150;
-
+    gantryInitialLength = 220;
+    
     L1 = computeL1(motorDistance/2,gantryInitialLength);
     L2 = computeL2(motorDistance/2,gantryInitialLength);
     FK(L1,L2,posX,posY);
@@ -50,44 +86,18 @@ void ofApp::setup(){
     
     ////// Gantry  ///////////
     
-    gantryRadius = 10;
-   // gantryColor = ofColor(255);
     
-    
-    ////// FBO buffer ////////
-    fbo.allocate(ofGetWidth(),ofGetHeight());
-    fbo.begin();
-    ofClear(255,255,255);
-    fbo.end();
-    
-    ///////// GUI /////////////
-    
-    gui.setup(); // most of the time you don't need a name 
-    pageSetup.setup( "Board/Page Settings" );
-    pageSetup.add(boardWidth.setup("Board Width",300,100,1000));
-    pageSetup.add(boardHeight.setup("Board Height",500,100,1000));
-    pageSetup.add(canvasYpos.setup("CanvasYpos",30,30,300));
-    pageSetup.add(canvasWidth.setup("Canvas Width",300,10,500));
-    pageSetup.add(canvasHeight.setup("Canvas Height",150,10,500));
-    gui.add(&pageSetup);
-    
-    pageSetup.add(color.setup("color", ofColor(100, 100, 140), ofColor(0, 0), ofColor(255, 255)));
-
-    machineGroup.setup( "Motor Settings" );
-    machineGroup.add(motorSteps.setup("MotSteps", 200, 0, 1600));
-    machineGroup.add(gantryRad.setup( "GantryRadius" , 10, 1, 30) );
-    
-    gui.add(&machineGroup);
-    
-    //////////////////////////////////////////////////////
+   
     
     cout << "posX = " << posX << endl;
     cout << "posY = " << posY << endl;
     
-    // Show GUi, collapse all tabs and load previous settings
-    bHide = false;
-    gui.minimizeAll();
-    gui.loadFromFile( "settings.xml");
+   
+    
+    serial.listDevices();
+    vector <ofSerialDeviceInfo> deviceList = serial.getDeviceList();
+    int baud = 115200;
+    serial.setup(0,baud);
     
     
 }
@@ -99,20 +109,21 @@ void ofApp::exit(){
 
 //--------------------------------------------------------------
 void ofApp::update(){
+      readSerial();
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-   
-//    cam.begin();
-//    ofScale(1, -1, 1);
-//    cam.setPosition(300, -300, 500);
-//    cam.disableMouseInput();
+    
+    //    cam.begin();
+    //    ofScale(1, -1, 1);
+    //    cam.setPosition(300, -300, 500);
+    //    cam.disableMouseInput();
     
     drawBoard();
     
     
-//    cam.end();
+    //    cam.end();
 }
 
 //--------------------------------------------------------------
@@ -132,12 +143,40 @@ void ofApp::keyPressed(int key){
     if(key == 't'){
         millisTime = ofGetElapsedTimeMillis();
         cout << millisTime << endl;
-    } 
+    }
     if(key == 'b'){
-     // FindTimeToPoint(300,500);
-     // Teleport(300,500);
+        // FindTimeToPoint(300,500);
+        // Teleport(300,500);
+    }
+    if(key == 'S'){
+        char m_Test[50];
+        sprintf(m_Test, "S%d %d %d %d %d %d \n", (int)motorSteps, (int)spooldia, (int)feedrateGUI, (int)segmentLength, (int)canvasYpos,  (int)boardWidth);
+        serial.writeBytes(&m_Test[0], 50);
+        cout << m_Test << endl;
+        
+    }
+    if(key == 'G'){
+        char m_Test[20];
+        int gotoX = 474;
+        int gotoY = 440;
+        sprintf(m_Test, "X%d Y%d Z0 \n", gotoX, gotoY);
+        serial.writeBytes(&m_Test[0], 20);
+        
+        sprintf(m_Test, "X%d Y%d Z0 \n",450,440);
+        serial.writeBytes(&m_Test[0], 20);
+        
+        sprintf(m_Test, "X%d Y%d Z0 \n",450,220);
+        serial.writeBytes(&m_Test[0], 20);
+        
+        sprintf(m_Test, "X%d Y%d Z0 \n",474,220);
+        serial.writeBytes(&m_Test[0], 20);
+    }
+    if(key == 'L'){
+        unsigned char buf[2] = {'L','\n'};
+        serial.writeBytes(&buf[0], 2);
     }
 }
+
 
 //--------------------------------------------------------------
 void ofApp::keyReleased(int key){
@@ -164,9 +203,15 @@ void ofApp::mousePressed(int x, int y, int button){
         cout << "Mouse X: " << mouseX << endl;
         cout << "Mouse Y: " << mouseY << endl;
         breakLineToSegments(posX,posY,mouseX,mouseY);
-    }
+                char m_Test[20];
+        
+                sprintf(m_Test, "X%d Y%d Z0 \n", (int)mouseX - 26, (int)mouseY);
+        
+                serial.writeBytes(&m_Test[0], 20);
 
-   
+    }
+    
+    
     
     
 }
@@ -188,7 +233,7 @@ void ofApp::mouseExited(int x, int y){
 
 //--------------------------------------------------------------
 void ofApp::windowResized(int w, int h){
-   // screenSize = ofToString(w) + "x" + ofToString(h);
+    // screenSize = ofToString(w) + "x" + ofToString(h);
 }
 
 //--------------------------------------------------------------
@@ -197,7 +242,7 @@ void ofApp::gotMessage(ofMessage msg){
 }
 
 //--------------------------------------------------------------
-void ofApp::dragEvent(ofDragInfo dragInfo){ 
+void ofApp::dragEvent(ofDragInfo dragInfo){
     
 }
 
@@ -237,96 +282,96 @@ void pauseDelay(int startTime){
 
 //--------------------------------------------------------------
 void ofApp::line(float newX, float newY){
-	int currentTime = ofGetElapsedTimeMillis();
-	int timeOfArrival = currentTime + (time * 1000); // time is the estimated draw time
-	cout << "currentTime = " << currentTime << "   timeOfArrival = " << timeOfArrival << endl; 
-	cout << "Time estimate to destination = " << timeOfArrival - currentTime << endl;
-	/// now we have the two delays for each motor we need to pulse them until we reach timeOfArrival
-	float timerM1 = currentTime + delayM1;
-	float timerM2 = currentTime + delayM2;
-	
-
-	while(timeOfArrival > ofGetElapsedTimeMillis()){
-		float now = ofGetElapsedTimeMillis();
-		if(now >= timerM1 && delayM1 > 20){
-			//cout << "M1 step" << endl;
-			timerM1 = now + delayM2;
-			if(m1Dir == 0){
-				L1 -= 2;
-			}	
-			if(m1Dir == 1){
-				L1 += 2;
-			}
-		}
-		if(now >= timerM2 && delayM2 > 20){
-			//cout << "M2 step" << endl;
-			timerM2 = now + delayM1;
-			if(m2Dir == 0){
-				L2 -= 2;
-			}
-			if(m2Dir == 1){
-				L2 += 2;
-			}
-		}
-	}
-	cout << "L1 = " << L1 << "  L2 = " << L2 << "  newL1 = " << newL1 << "  newL2 = " << newL2 << endl;
-	FK(L1,L2,posX,posY);
+    int currentTime = ofGetElapsedTimeMillis();
+    int timeOfArrival = currentTime + (time * 1000); // time is the estimated draw time
+    cout << "currentTime = " << currentTime << "   timeOfArrival = " << timeOfArrival << endl;
+    cout << "Time estimate to destination = " << timeOfArrival - currentTime << endl;
+    /// now we have the two delays for each motor we need to pulse them until we reach timeOfArrival
+    float timerM1 = currentTime + delayM1;
+    float timerM2 = currentTime + delayM2;
+    
+    
+    while(timeOfArrival > ofGetElapsedTimeMillis()){
+        float now = ofGetElapsedTimeMillis();
+        if(now >= timerM1 && delayM1 > 20){
+            //cout << "M1 step" << endl;
+            timerM1 = now + delayM2;
+            if(m1Dir == 0){
+                L1 -= 2;
+            }
+            if(m1Dir == 1){
+                L1 += 2;
+            }
+        }
+        if(now >= timerM2 && delayM2 > 20){
+            //cout << "M2 step" << endl;
+            timerM2 = now + delayM1;
+            if(m2Dir == 0){
+                L2 -= 2;
+            }
+            if(m2Dir == 1){
+                L2 += 2;
+            }
+        }
+    }
+    cout << "L1 = " << L1 << "  L2 = " << L2 << "  newL1 = " << newL1 << "  newL2 = " << newL2 << endl;
+    FK(L1,L2,posX,posY);
 }
 
 //--------------------------------------------------------------
 void ofApp::drawLine(float x, float y){
-	float currentTime = ofGetElapsedTimeMillis();
-	float timeOfArrival = currentTime + (time * 1000);
-	float timerM1 = currentTime + delayM1;
-	float timerM2 = currentTime + delayM2;
-	//cout << "CurrentTime = " << currentTime << "  timeOfArrival = " << timeOfArrival << endl;
-	//cout << "Estimated drawing time = " << timeOfArrival - currentTime << endl;
-	//cout << "TimerM1 = " << timerM1 << "  timerM2 = " << timerM2 << endl;
-	while(timeOfArrival >= ofGetElapsedTimeMillis()){
-		float now = ofGetElapsedTimeMillis();
-		if(now >= timerM1){
-			if(m1Dir == 0){
-				L1 -= stepToMM;
-			}else{
-				L1 += stepToMM;
-			}
-			timerM1 = now + delayM1;
-			fbo.begin();
-			FK(L1,L2,posX,posY);
-			ofDrawCircle(posX,posY,0.5);
-			fbo.end();
-		}
-		if(now >= timerM2){
-			if(m2Dir == 0){
-				L2 -= stepToMM;
-			}else{
-				L2 += stepToMM;
-			}
-			timerM2 = now + delayM2;
-			fbo.begin();
-			FK(L1,L2,posX,posY);
-			ofDrawCircle(posX,posY,0.5);
-			fbo.end();
-
-		} 
-
-	}
-	FK(L1,L2,posX,posY);	
+    float currentTime = ofGetElapsedTimeMillis();
+    float timeOfArrival = currentTime + (time * 1000);
+    float timerM1 = currentTime + delayM1;
+    float timerM2 = currentTime + delayM2;
+    //cout << "CurrentTime = " << currentTime << "  timeOfArrival = " << timeOfArrival << endl;
+    //cout << "Estimated drawing time = " << timeOfArrival - currentTime << endl;
+    //cout << "TimerM1 = " << timerM1 << "  timerM2 = " << timerM2 << endl;
+    while(timeOfArrival >= ofGetElapsedTimeMillis()){
+        float now = ofGetElapsedTimeMillis();
+        if(now >= timerM1){
+            if(m1Dir == 0){
+                L1 -= stepToMM;
+            }else{
+                L1 += stepToMM;
+            }
+            timerM1 = now + delayM1;
+            fbo.begin();
+            FK(L1,L2,posX,posY);
+            ofDrawCircle(posX,posY,0.5);
+            fbo.end();
+        }
+        if(now >= timerM2){
+            if(m2Dir == 0){
+                L2 -= stepToMM;
+            }else{
+                L2 += stepToMM;
+            }
+            timerM2 = now + delayM2;
+            fbo.begin();
+            FK(L1,L2,posX,posY);
+            ofDrawCircle(posX,posY,0.5);
+            fbo.end();
+            
+        }
+        
+    }
+    FK(L1,L2,posX,posY);
 }
 
 //--------------------------------------------------------------
 void ofApp::Teleport(float x, float y){
-	//Move the virtual gantry to position x,y
-	IK(x,y,L1,L2);
+    //Move the virtual gantry to position x,y
+    IK(x,y,L1,L2);
 }
 
 //--------------------------------------------------------------
 //Turn XY coordinates to string length L1 and L2
 
 void ofApp::IK(float x, float y, float &L1, float &L2){
-	L1 = computeL1(x,y);
-	L2 = computeL2(x,y);
-	
+    L1 = computeL1(x,y);
+    L2 = computeL2(x,y);
+    
 }
 
 //--------------------------------------------------------------
@@ -339,90 +384,90 @@ void ofApp::FK(float L1, float L2, float &x, float &y){
     float b = motorDistance;
     float c = (float)L2; //* stepToMM;
     float theta = ((a*a+b*b-c*c)/(2.0*a*b));
-//    cout << theta << endl;
+    //    cout << theta << endl;
     x = theta * a;
     int limit_top = 0;
     y = abs(limit_top - (sqrt( 1.0 - theta * theta ) * a));
-   // cout << "L1 " << L1 << "   L2  " << L2 << endl;
-   // cout << "Forward Kinematics" << endl;
-   // cout << "  x =  " << x << endl;
-   // cout << "  y =  " << y << endl;
+    // cout << "L1 " << L1 << "   L2  " << L2 << endl;
+    // cout << "Forward Kinematics" << endl;
+    // cout << "  x =  " << x << endl;
+    // cout << "  y =  " << y << endl;
 }
 
 //--------------------------------------------------------------
 
 void ofApp::FindTimeToPoint(float posX, float posY, float newX, float newY){
-	targetL1 = 0;
-	targetL2 = 0;
-	//cout << "Newx " << newX << "  newY  " << newY << endl;
-	//Use IK to find the length depending on the coordinates.
-	IK(newX, newY, targetL1, targetL2);
-	IK(posX,posY,L1,L2);
-    	cout << "currentL1 " << L1 << "   currentL2 " << L2 <<  endl;
-	cout << "targetL1 " << targetL1  <<  "   targetL2 " << targetL2  <<  endl;
-	// find the difference in current vs target length of strings
+    targetL1 = 0;
+    targetL2 = 0;
+    //cout << "Newx " << newX << "  newY  " << newY << endl;
+    //Use IK to find the length depending on the coordinates.
+    IK(newX, newY, targetL1, targetL2);
+    IK(posX,posY,L1,L2);
+    cout << "currentL1 " << L1 << "   currentL2 " << L2 <<  endl;
+    cout << "targetL1 " << targetL1  <<  "   targetL2 " << targetL2  <<  endl;
+    // find the difference in current vs target length of strings
     dm1 = targetL1 - L1;
     dm2 = targetL2 - L2;
-	//cout << "Difference in string m1  " << dm1 << endl;
-	//cout << "Difference in string m2  " << dm2 << endl;
-
-	}
+    //cout << "Difference in string m1  " << dm1 << endl;
+    //cout << "Difference in string m2  " << dm2 << endl;
+    
+}
 
 //--------------------------------------------------------------
 /*
-  First see which motor has to move more and calculate how long it will take to reach destination using max speed, then calculate the delay we will have to use for the other motor in order that they will both arrive to the destination at the same time */
+ First see which motor has to move more and calculate how long it will take to reach destination using max speed, then calculate the delay we will have to use for the other motor in order that they will both arrive to the destination at the same time */
 
 void ofApp::calculateTime2(float dm1, float dm2){
-	// calculate how many steps each motor must do to arrive to destination
-	float stepsM1 = abs(dm1) / stepToMM;
-	float stepsM2 = abs(dm2) / stepToMM;
-	//Now we ca find the delay for each motor
-	//First we have to find the time needed for the motor that is the farthest based on our maximum speed 
-	if(abs(dm1) > abs(dm2)){
-	 	time = abs(dm1) / frMMs;
-	 }else{
-	 	time = abs(dm2) / frMMs;
-	 }
-	//Now we know how many steps we have to do and in how many seconds we have to do them so we can calculate the delay.
-	delayM1 = abs((time * 1000) / stepsM1);
-	delayM2 = abs((time * 1000) / stepsM2);
-	//cout << "dm1 = " << dm1 << "  dm2 = " << dm2 << endl;
-	//cout << "Steps m1 = " << stepsM1 << "  Steps m2 = " << stepsM2 << endl;
-	//cout << "Delay m1 = " << delayM1 << "  Delay m2 = " << delayM2 << endl;
+    // calculate how many steps each motor must do to arrive to destination
+    float stepsM1 = abs(dm1) / stepToMM;
+    float stepsM2 = abs(dm2) / stepToMM;
+    //Now we ca find the delay for each motor
+    //First we have to find the time needed for the motor that is the farthest based on our maximum speed
+    if(abs(dm1) > abs(dm2)){
+        time = abs(dm1) / frMMs;
+    }else{
+        time = abs(dm2) / frMMs;
+    }
+    //Now we know how many steps we have to do and in how many seconds we have to do them so we can calculate the delay.
+    delayM1 = abs((time * 1000) / stepsM1);
+    delayM2 = abs((time * 1000) / stepsM2);
+    //cout << "dm1 = " << dm1 << "  dm2 = " << dm2 << endl;
+    //cout << "Steps m1 = " << stepsM1 << "  Steps m2 = " << stepsM2 << endl;
+    //cout << "Delay m1 = " << delayM1 << "  Delay m2 = " << delayM2 << endl;
 }
 
 
 //-------------------------------------------------------------
 void ofApp::checkMotorDirection(float dm1, float dm2){
-	if(dm1 > 0){
-	    m1Dir = 1;
-	}else{
-	    m1Dir = 0;
-	}
-	if(dm2 > 0){
-	    m2Dir = 1;
-	}else{
-	    m2Dir = 0;
-	}
-	
-   // cout << "m1Dir  " << m1Dir << "  m2Dir  " << m2Dir << endl;
+    if(dm1 > 0){
+        m1Dir = 1;
+    }else{
+        m1Dir = 0;
+    }
+    if(dm2 > 0){
+        m2Dir = 1;
+    }else{
+        m2Dir = 0;
+    }
+    
+    // cout << "m1Dir  " << m1Dir << "  m2Dir  " << m2Dir << endl;
 }
 
 //-------------------------------------------------------------
 void ofApp::breakLineToSegments(float posX, float posY, float newX, float newY){
-	
-	int x = abs( (newX - posX) * (newX - posX) );
-	int y = abs( (newY - posY) * (newY - posY) );
-	lineLength = sqrt( x + y ); 
-        // divide the line length with the segmentLength to see how many semgents we nee to draw 
-	
-	cout << "LineLength = " << lineLength << endl;
-	
-	//find how many segments we need to draw
-	segmentCount = lineLength / segmentLength;
-	segmentRemaining = lineLength % segmentLength;
-
-	cout << "SegmentCount = " << segmentCount << "  remainingSegment = " << segmentRemaining << endl;
+    
+    int x = abs( (newX - posX) * (newX - posX) );
+    int y = abs( (newY - posY) * (newY - posY) );
+    lineLength = sqrt( x + y );
+    // divide the line length with the segmentLength to see how many semgents we nee to draw
+    
+    cout << "LineLength = " << lineLength << endl;
+    
+    //find how many segments we need to draw
+    segmentCount = lineLength / segmentLength;
+    segmentRemaining = lineLength % segmentLength;
+    
+    cout << "SegmentCount = " << segmentCount << "  remainingSegment = " << segmentRemaining << endl;
     
     
     if(lineLength > segmentLength){
@@ -446,20 +491,20 @@ void ofApp::breakLineToSegments(float posX, float posY, float newX, float newY){
         if(abs(posX - newX) > 2 || abs(posY - newY) > 2){
             breakLineToSegments(posX,posY,newX,newY);
         }
-       /*
-        FindTimeToPoint(posX, posY, newX, newY);
-        checkMotorDirection(dm1,dm2);
-        calculateTime2(dm1, dm2);
-        drawLine(newX, newY);
-       */
-
+        /*
+         FindTimeToPoint(posX, posY, newX, newY);
+         checkMotorDirection(dm1,dm2);
+         calculateTime2(dm1, dm2);
+         drawLine(newX, newY);
+         */
+        
         
     }else{
         FindTimeToPoint(posX, posY, newX, newY);
         checkMotorDirection(dm1,dm2);
         calculateTime2(dm1, dm2);
         drawLine(newX, newY);
-    
+        
     }
     
     
@@ -483,7 +528,7 @@ void ofApp::drawBoard(){
         ofSetColor(255);
         ofDrawRectangle(canvasXpos,canvasYpos / scaleToFitScreen,canvasWidth / scaleToFitScreen, canvasHeight / scaleToFitScreen);
     }
-
+    
     
     
     
@@ -513,6 +558,12 @@ void ofApp::drawBoard(){
     
 }
 
+//--------------------------------------------------------------
+void ofApp::readSerial(){
+    if(serial.available()>0){
+        cout << (char)serial.readByte();
+    }
+}
 
 
 

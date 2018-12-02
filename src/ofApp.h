@@ -40,6 +40,7 @@ public:
     void circleResolutionChanged(int & circleResolution);
     void ringButtonPressed();
     void drawBoard();
+    void readSerial();
     bool bHide;
     
     
@@ -53,13 +54,14 @@ public:
     ofxPanel gui;
     ofxIntSlider boardWidth;
     ofxIntSlider boardHeight;
-    
+    ofxIntSlider segmentLength;
 
     
     //// GUI Group1 /////
     ofxGuiGroup machineGroup;
     ofxIntSlider motorSteps;
-    ofxIntSlider gantryRad;
+    ofxIntSlider spooldia;
+    ofxIntSlider feedrateGUI;
     ofxPanel screenSize;
 
     int scaleToFitScreen;
@@ -90,7 +92,7 @@ public:
     float delayM1;
     float delayM2;
     int lineLength; 
-    int segmentLength;
+   // int segmentLength;
     int segmentCount;
     float segmentRemaining;
     ///// Polarbot functions //////
@@ -100,17 +102,15 @@ public:
    
     
     int stepper;  // nema 17 1.8 degree 200 steps per revolution
-    float spooldia;  // spool diameter in mm
     float spoolCir; // circumference of the spool in mm
     float stepToMM;
     
-    int feedrate; // 2000 mm/min = ~33mm/s
     int frMMs;
     
     float stepDelay;
     float time;
     
-    
+ofSerial serial;
 ImageClass image;
 ofEasyCam cam;
 
