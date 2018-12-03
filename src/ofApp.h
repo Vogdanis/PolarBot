@@ -41,9 +41,12 @@ public:
     void ringButtonPressed();
     void drawBoard();
     void readSerial();
+    void readGcode();
+    void drawGcode();
+    void checkSerial();
     bool bHide;
     
-    
+
     
     ////// GUI //////////
     ofxGuiGroup pageSetup;
@@ -71,6 +74,7 @@ public:
     int canvasXpos;
     int boardXpos;
     
+    int gcodeCurrentLine;
     
     ofFbo fbo;
     ////// Gantry ///////
@@ -110,9 +114,11 @@ public:
     float stepDelay;
     float time;
     
-ofSerial serial;
-ImageClass image;
-ofEasyCam cam;
-
+    ofSerial serial;
+    ImageClass image;
+    ofEasyCam cam;
+    ofFile gcodeFile;
+    ofBuffer buff;
+    
 };
 

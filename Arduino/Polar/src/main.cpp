@@ -49,6 +49,7 @@ int FRpos = 2;
 int SLpos = 3;
 int GYpos = 4;
 int MDpos = 5;
+
  struct EEPROMobj{
     int MSeeprom;
     int SDeeprom;
@@ -164,7 +165,7 @@ void FindDistanceToPoint(float posX, float posY, float newX, float newY){
 	// find the difference in current vs target length of strings
     dm1 = targetL1 - L1;
     dm2 = targetL2 - L2;
-    Serial.print("Dm1 = ");Serial.print(dm1);Serial.print("   Dm2 = ");Serial.println(dm2);
+    //Serial.print("Dm1 = ");Serial.print(dm1);Serial.print("   Dm2 = ");Serial.println(dm2);
 	}
 
 
@@ -181,7 +182,7 @@ void checkMotorDirection(float dm1, float dm2){
 	}else{
 	    m2Dir = 0;
 	}
-	
+
 }
 //-------------------------------------------------------------
 
@@ -189,7 +190,7 @@ void calculateTime(float dm1, float dm2){
 	// calculate how many steps each motor must do to arrive to destination
 	stepsM1 = abs(dm1) / stepToMM;
 	stepsM2 = abs(dm2) / stepToMM;
-    Serial.print("stepsM1 = ");Serial.print(stepsM1);Serial.print("    stepsM2 = ");Serial.println(stepsM2);
+    //Serial.print("stepsM1 = ");Serial.print(stepsM1);Serial.print("    stepsM2 = ");Serial.println(stepsM2);
 	//Now we ca find the delay for each motor
 	//First we have to find the time needed for the motor that is the farthest based on our maximum speed 
 	if(abs(dm1) > abs(dm2)){
@@ -198,9 +199,9 @@ void calculateTime(float dm1, float dm2){
 	 	time = abs(dm2) / frMMs;
 	 }
 	//Now we know how many steps we have to do and in how many seconds we have to do them so we can calculate the delay.
-	delayM1 = abs((time * 1000) / stepsM1);
-	delayM2 = abs((time * 1000) / stepsM2);
-    Serial.print("delayM1 = ");Serial.print(delayM1);Serial.print("    delayM2 = ");Serial.println(delayM2);
+	delayM1 = abs((time * feedrate) / stepsM1);
+	delayM2 = abs((time * feedrate) / stepsM2);
+    //Serial.print("delayM1 = ");Serial.print(delayM1);Serial.print("    delayM2 = ");Serial.println(delayM2);
 
 }
 
@@ -208,11 +209,11 @@ void calculateTime(float dm1, float dm2){
 void drawLine(float x, float y){
 	float currentTime = millis();
 	float timeOfArrival = currentTime + (time * 1000);
-    Serial.print("Estimated Time to arrival = "); Serial.println(timeOfArrival-currentTime);
+    //Serial.print("Estimated Time to arrival = "); Serial.println(timeOfArrival-currentTime);
 	float timerM1 =  currentTime + delayM1 ;
 	float timerM2 =  currentTime + delayM2 ;
 
-    Serial.print("timerM1 = ");Serial.print(timerM1);Serial.print("    timerM2 = ");Serial.println(timerM2);
+    //Serial.print("timerM1 = ");Serial.print(timerM1);Serial.print("    timerM2 = ");Serial.println(timerM2);
    
 	while(timeOfArrival >= millis()){
 		float now = millis();
@@ -390,7 +391,7 @@ void getFromEeprom(){
     segmentLength = getFromRom.SLeeprom;
     gantryYpos = getFromRom.GYeeprom;
     motorDistance = getFromRom.MDeeprom;
-    
+
     Serial.println("/////////////////////");
     Serial.println("EEPROM stored values");
     Serial.print("MotorStepps : "); Serial.println(stepper);
@@ -423,7 +424,7 @@ void checkBuffer(char buffer[]){
                    break;
                }
            }
-        Serial.print("xCordSerial = "); Serial.println(xCordSerial);
+        //Serial.print("xCordSerial = "); Serial.println(xCordSerial);
         tempX = xCordSerial.toFloat();
         //Serial.print("To Float : ");Serial.println(tempX,5);
         xCordSerial = "";
@@ -440,7 +441,7 @@ void checkBuffer(char buffer[]){
                    break;
                }
            }
-        Serial.print("yCordSerial = "); Serial.println(yCordSerial);
+        //Serial.print("yCordSerial = "); Serial.println(yCordSerial);
         tempY = yCordSerial.toFloat();
         //Serial.print("To Float : ");Serial.println(tempY,5);
         yCordSerial = "";
@@ -457,7 +458,7 @@ void checkBuffer(char buffer[]){
                    break;
                }
            }
-        Serial.print("zCordSerial = "); Serial.println(zCordSerial);
+        //Serial.print("zCordSerial = "); Serial.println(zCordSerial);
         tempZ = zCordSerial.toFloat();
         //Serial.print("To Float : ");Serial.println(tempZ,5);
         zCordSerial = "";
@@ -508,7 +509,8 @@ void checkBuffer(char buffer[]){
         gotX = 0;
         gotY = 0;
         gotZ = 0;
-        Serial.print("posX = ");Serial.print(posX);Serial.print("   posY = ");Serial.println(posY);
+       // Serial.print("posX = ");Serial.print(posX);Serial.print("   posY = ");Serial.println(posY);
+        Serial.println('%');
     }
 }
     
@@ -525,10 +527,10 @@ void setup() {
     L1 = computeL1(motorDistance/2,gantryYpos);
     L2 = computeL2(motorDistance/2,gantryYpos);
 
-    Serial.print("L1 = ");Serial.print(L1);
-    Serial.print("    L2 = ");Serial.println(L2);
+    //Serial.print("L1 = ");Serial.print(L1);
+    //Serial.print("    L2 = ");Serial.println(L2);
     FK(L1,L2,posX,posY);
-    Serial.print("X = ");Serial.print(posX);Serial.print("    Y = ");Serial.println(posY);
+    //Serial.print("X = ");Serial.print(posX);Serial.print("    Y = ");Serial.println(posY);
 
 
     
@@ -555,11 +557,11 @@ void loop() {
     
 
     if(buffReceived == 1 ){
-        Serial.println("RecievedBuffer");
+        //Serial.println("RecievedBuffer");
         buffReceived = 0;
-        for(int i=0; i < bufferSize; i++){
-            Serial.print(buffer[i]);
-        }
+        // for(int i=0; i < bufferSize; i++){
+        //     Serial.print(buffer[i]);
+        // }
         checkBuffer(buffer);
     }
 

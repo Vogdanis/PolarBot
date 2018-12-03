@@ -16,15 +16,15 @@
 	<Motor_Settings>
 		<MotSteps>200</MotSteps>
 		<GantryRadius>12</GantryRadius>
-		<Feedrate>2000</Feedrate>
+		<Feedrate>500</Feedrate>
 		<SegmentLength>10</SegmentLength>
 	</Motor_Settings>
 	<Board_Page_Settings>
 		<Board_Width>950</Board_Width>
 		<Board_Height>926</Board_Height>
 		<CanvasYpos>220</CanvasYpos>
-		<Canvas_Width>367</Canvas_Width>
-		<Canvas_Height>470</Canvas_Height>
+		<Canvas_Width>210</Canvas_Width>
+		<Canvas_Height>292</Canvas_Height>
 		<color>140, 130, 108, 255</color>
 	</Board_Page_Settings>
 </group>
