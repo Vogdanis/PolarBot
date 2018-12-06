@@ -18,11 +18,13 @@
 		<GantryRadius>12</GantryRadius>
 		<Feedrate>500</Feedrate>
 		<SegmentLength>10</SegmentLength>
+		<FeedrateMM_s>20</FeedrateMM_s>
+		<microStepping>8</microStepping>
 	</Motor_Settings>
 	<Board_Page_Settings>
 		<Board_Width>950</Board_Width>
 		<Board_Height>926</Board_Height>
-		<CanvasYpos>220</CanvasYpos>
+		<CanvasYpos>300</CanvasYpos>
 		<Canvas_Width>210</Canvas_Width>
 		<Canvas_Height>292</Canvas_Height>
 		<color>140, 130, 108, 255</color>

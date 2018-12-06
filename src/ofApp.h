@@ -63,6 +63,7 @@ public:
     //// GUI Group1 /////
     ofxGuiGroup machineGroup;
     ofxIntSlider motorSteps;
+    ofxIntSlider microStepping;
     ofxIntSlider spooldia;
     ofxIntSlider feedrateGUI;
     ofxPanel screenSize;
@@ -75,6 +76,9 @@ public:
     int boardXpos;
     
     int gcodeCurrentLine;
+    bool launchGcode = 0;
+    int linesLength = 0;
+    int gcodeRead = 0;
     
     ofFbo fbo;
     ////// Gantry ///////
@@ -114,6 +118,7 @@ public:
     float stepDelay;
     float time;
     
+    vector < string > lines;
     ofSerial serial;
     ImageClass image;
     ofEasyCam cam;

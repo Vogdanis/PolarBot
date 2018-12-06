@@ -26,8 +26,9 @@ void ofApp::setup(){
     
     machineGroup.setup( "Motor Settings" );
     machineGroup.add(motorSteps.setup("MotSteps", 200, 0, 1600));
+    machineGroup.add(microStepping.setup("microStepping", 8, 0, 16));
     machineGroup.add(spooldia.setup( "GantryRadius" , 10, 1, 30) );
-    machineGroup.add(feedrateGUI.setup("Feedrate", 2000,500,4000));
+    machineGroup.add(feedrateGUI.setup("FeedrateMM/s", 30,10,60));
     machineGroup.add(segmentLength.setup("SegmentLength", 10,5,50));
     
     gui.add(&machineGroup);
@@ -48,7 +49,7 @@ void ofApp::setup(){
     spoolCir = spooldia * PI; // circumference of the spool in mm
     stepToMM = spoolCir / stepper;
     
-    frMMs = feedrateGUI / 60;
+    frMMs = feedrateGUI ; //frMMs = feedrateGUI / 60;
     segmentLength = 10;
     segmentCount = 0;
     segmentRemaining = 0;
@@ -70,7 +71,7 @@ void ofApp::setup(){
     ////// PolarBot ///////////
     
     motorDistance = ofGetWidth();
-    gantryInitialLength = 220;
+    gantryInitialLength = canvasYpos;
     
     L1 = computeL1(motorDistance/2,gantryInitialLength);
     L2 = computeL2(motorDistance/2,gantryInitialLength);
@@ -151,26 +152,44 @@ void ofApp::keyPressed(int key){
     }
     if(key == 'S'){
         char m_Test[50];
-        sprintf(m_Test, "S%d %d %d %d %d %d \n", (int)motorSteps, (int)spooldia, (int)feedrateGUI, (int)segmentLength, (int)canvasYpos,  (int)boardWidth);
+        sprintf(m_Test, "S%d %d %d %d %d %d \n", (int)motorSteps * (int)microStepping, (int)spooldia, (int)feedrateGUI, (int)segmentLength, (int)canvasYpos,  (int)boardWidth);
         serial.writeBytes(&m_Test[0], 50);
         cout << m_Test << endl;
         
     }
     if(key == 'G'){
         char m_Test[20];
-        int gotoX = 474;
-        int gotoY = 440;
-        sprintf(m_Test, "X%d Y%d Z0 \n", gotoX, gotoY);
+//        sprintf(m_Test, "X%d Y%d Z0 \n",475,400);
+//        serial.writeBytes(&m_Test[0], 20);
+//
+//        sprintf(m_Test, "X%d Y%d Z0 \n",400,400);
+//        serial.writeBytes(&m_Test[0], 20);
+//
+//        sprintf(m_Test, "X%d Y%d Z0 \n",400,300);
+//        serial.writeBytes(&m_Test[0], 20);
+//
+//
+//        sprintf(m_Test, "X%d Y%d Z0 \n", 475, 300);
+//        serial.writeBytes(&m_Test[0], 20);
+        
+        sprintf(m_Test, "X%d Y%d Z0 \n",500,300);
         serial.writeBytes(&m_Test[0], 20);
         
-        sprintf(m_Test, "X%d Y%d Z0 \n",450,440);
+        sprintf(m_Test, "X%d Y%d Z0 \n",500,320);
         serial.writeBytes(&m_Test[0], 20);
         
-        sprintf(m_Test, "X%d Y%d Z0 \n",450,220);
+        sprintf(m_Test, "X%d Y%d Z0 \n", 475, 320);
         serial.writeBytes(&m_Test[0], 20);
         
-        sprintf(m_Test, "X%d Y%d Z0 \n",474,220);
+        sprintf(m_Test, "X%d Y%d Z0 \n",475,360);
         serial.writeBytes(&m_Test[0], 20);
+        
+        sprintf(m_Test, "X%d Y%d Z0 \n", 520, 360);
+        serial.writeBytes(&m_Test[0], 20);
+        
+        sprintf(m_Test, "X%d Y%d Z0 \n", 475, 300);
+        serial.writeBytes(&m_Test[0], 20);
+        
     }
     if(key == 'L'){
         unsigned char buf[2] = {'L','\n'};
@@ -178,11 +197,14 @@ void ofApp::keyPressed(int key){
     }
     
     if(key == 'M'){
-        readGcode();
+        //readGcode();
     }
     
     if(key == 'n'){
-        drawGcode();
+        launchGcode = 1;
+        char m_Test[20];
+        sprintf(m_Test, "X%d Y%d Z0 \n", 475, 300);
+        serial.writeBytes(&m_Test[0], 20);
         
     }
 }
@@ -579,83 +601,65 @@ void ofApp::readSerial(){
     if(c == '%'){
         drawGcode();
     }
+    
 }
 
 //--------------------------------------------------------------
 void ofApp::readGcode(){
     cout << "Reading Gcode File" << endl;
-    //gcodeFile.open("test.gcode");
-    buff = gcodeFile.readToBuffer();
+    lines = ofSplitString(ofBufferFromFile("test.gcode").getText(), "\n");
+    linesLength = lines.size();
+    //cout << lines.at(gcodeCurrentLine) << endl;
 
-    auto lines = ofSplitString(ofBufferFromFile("test.gcode").getText(), "\n");
-    //int line = 200;
-    cout << lines.size()-1 << endl;
-    int line = lines.size() - 40;
-
-//        for(int i = 0; i < 200; i++){
-//            cout << lines.at(i) << endl;
-//            string a = lines.at(i);
-//
-//            int endX = a.find(' ');
-//            string cordXstr = a.substr(1,endX);
-//            int cordX = std::stoi( cordXstr );
-//            cout << cordX << endl;
-//
-//           // std::stoi( cordX );
-//            int endY = a.find(endX+2,' ');
-//            string cordYstr = a.substr(endX+2,endY);
-//            int cordY = std::stoi( cordYstr );
-//            cout << cordY << endl;
-//
-//            int offsetX = 250;
-//            int offsetY = 80;
-//
-//            //fbo.begin();
-//            breakLineToSegments(posX, posY, cordX + offsetX, cordY + offsetY);
-//            update();
-//            draw();
-//            //ofDrawLine(posX, posY,  cordX + offsetX, cordY + offsetY);
-//            //fbo.end();
-//            posX = cordX + offsetX;
-//            posY = cordY + offsetY;
-//
-//    }
-    
 }
 
 void ofApp::drawGcode(){
-    gcodeCurrentLine++;
-    auto lines = ofSplitString(ofBufferFromFile("test.gcode").getText(), "\n");
     
-        //cout << lines.at(gcodeCurrentLine) << endl;
-        string a = lines.at(gcodeCurrentLine);
+    if(gcodeRead == 0){
+        readGcode();
+        gcodeRead = 1;
+    }
+    
+    if(gcodeCurrentLine >= linesLength){
+        launchGcode = 0;
+        gcodeCurrentLine = lineLength;
+    }
+    
+    if(launchGcode == 1){
         
+        string a = lines.at(gcodeCurrentLine);
+        cout << endl << "Printing Line : = " << gcodeCurrentLine;
         int endX = a.find(' ');
         string cordXstr = a.substr(1,endX);
         int cordX = std::stoi( cordXstr );
         //cout << cordX << endl;
-        
+
         // std::stoi( cordX );
         int endY = a.find(endX+2,' ');
         string cordYstr = a.substr(endX+2,endY);
         int cordY = std::stoi( cordYstr );
         //cout << cordY << endl;
-        
-        int offsetX = 250;
-        int offsetY = 80;
-        
+
+        int offsetX = 475;
+        int offsetY = 300;
+//        int offsetX = 0;
+//        int offsetY = 0;
+    
         fbo.begin();
         //breakLineToSegments(posX, posY, cordX + offsetX, cordY + offsetY);
         ofDrawLine(posX, posY,  cordX + offsetX, cordY + offsetY);
         fbo.end();
-    
+
         char m_Test[20];
         sprintf(m_Test, "X%d Y%d Z0 \n", cordX + offsetX - 26, cordY + offsetY);
         serial.writeBytes(&m_Test[0], 20);
-    
+
         posX = cordX + offsetX;
         posY = cordY + offsetY;
-
+        
+        gcodeCurrentLine++;
+        
+    }
     
 }
 
