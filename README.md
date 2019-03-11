@@ -1,4 +1,4 @@
 # PolarBot
 Vertical Plotter Controller 
 
-The controller interface is write in c++ with OpenFrameworks
+Vertical plotter controller interface writen in c++ with OpenFrameworks
